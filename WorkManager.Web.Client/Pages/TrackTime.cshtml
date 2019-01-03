@@ -1,0 +1,97 @@
+﻿@page "/TrackTime"
+@inject HttpClient httpClient
+@using System;
+@using System.Timers;
+@using WorkManager.Web.Interfaces;
+@using WorkManager.Web.Models;
+
+@if (!string.IsNullOrWhiteSpace(this.ErrorMessage))
+{
+    <div class="alert alert-danger">@this.ErrorMessage</div>
+}
+<div class="row">
+    <input class="col-xl-9 form-control" type="text" name="name" bind="@this.Description" />
+    <div class="col-xl-3">
+        <button class="btn btn-@(this.IsTimerStarted ? "danger" : "success")" onclick="@ClickStartStop">@(this.IsTimerStarted ? "Stop" : "Start")</button>
+        <i>
+            @if (this.Duration != null)
+            {
+                @this.Duration.ToString()
+            }
+        </i>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <ul style="list-style-type: none;">
+            @if (this.CompletedTimeEntries != null)
+            {
+                foreach (var item in this.CompletedTimeEntries)
+                {
+                    <li>@item.Description | @(item.StartDateTime.Date.ToString("yyyy-MM-dd") ?? "None") | @(item.EndDateTime.HasValue ? (item.StartDateTime - item.EndDateTime.Value).ToString() : "None")</li>
+                }
+            }
+        </ul>
+    </div>
+</div>
+
+@functions {
+string ErrorMessage { get; set; }
+string Id { get; set; }
+string Description { get; set; }
+DateTime? StartDateTime { get; set; }
+DateTime? EndDateTime { get; set; }
+TimeSpan? Duration { get; set; }
+bool IsTimerStarted { get; set; }
+Timer Timer { get; set; }
+TimeEntry[] CompletedTimeEntries { get; set; }
+protected override async Task OnInitAsync()
+{
+    try
+    {
+        var allEntries = await this.httpClient.GetJsonAsync<TimeEntry[]>("api/TimeEntries");
+        if (allEntries != null && allEntries.Length > 0)
+        {
+            this.CompletedTimeEntries = allEntries.Where(i => i.EndDateTime != null).ToArray();
+            var currentEntry = allEntries.Where(i => i.EndDateTime == null).FirstOrDefault();
+            if (currentEntry != null)
+            {
+
+            }
+        }
+    }
+    catch (Exception e)
+    {
+        this.ErrorMessage = e.Message;
+    }
+}
+void ClickStartStop()
+{
+    if (this.IsTimerStarted = !this.IsTimerStarted) this.Started();
+    else this.Stopped();
+}
+void Started()
+{
+    this.StartDateTime = DateTime.Now;
+    if (this.Timer == null)
+    {
+        this.Timer = new Timer();
+        this.Timer.Elapsed += this.TimerTick;
+    }
+    this.Timer.Start();
+    this.Duration = new TimeSpan();
+}
+void Stopped()
+{
+    this.Timer?.Stop();
+    this.Duration = null;
+}
+void TimerTick(object sender, ElapsedEventArgs e)
+{
+    if (this.StartDateTime.HasValue)
+    {
+        this.Duration = System.DateTime.Now - this.StartDateTime.Value;
+    }
+    this.StateHasChanged();
+}
+}

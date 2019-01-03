@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WorkManager.Web.Client\WorkManager.Web.Client.csproj" />
-    <ProjectReference Include="..\WorkManager.Web.Shared\WorkManager.Web.Shared.csproj" />
+    <ProjectReference Include="..\WorkManager.Web.Models\WorkManager.Web.Models.csproj" />
   </ItemGroup>
 
 </Project>
