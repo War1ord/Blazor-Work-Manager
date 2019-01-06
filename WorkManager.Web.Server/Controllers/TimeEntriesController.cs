@@ -1,7 +1,6 @@
 ﻿namespace WorkManager.Web.Server.Controllers
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
 
     using Microsoft.AspNetCore.Mvc;
@@ -12,18 +11,31 @@
     public class TimeEntriesController : Controller
     {
         [HttpGet]
-        public IEnumerable<TimeEntry> GetTimeEntries()
+        public IActionResult GetTimeEntries()
         {
-            return Enumerable
+            var now = DateTime.Now;
+            var results = Enumerable
                 .Range(1, 20)
                 .Select(index => new TimeEntry
                 {
                     Description = $"Test Time Entry {index}",
-                    StartDateTime = DateTime.Now.Date.AddDays(index),
-                    EndDateTime = DateTime.Now.Date.AddDays(index),
+                    StartDateTime = now.Date.AddDays(index),
+                    EndDateTime = now.Date.AddDays(index),
                     Id = Guid.NewGuid().ToString(),
                 })
-                .ToArray();
+                .ToList();
+            results.Add(new TimeEntry
+            {
+                Description = "Current time entry",
+                StartDateTime = now.AddHours(-2),
+                Id = Guid.NewGuid().ToString(),
+            });
+
+            if (results == null || results.Count < 1)
+            {
+                return this.NotFound();
+            }
+            return this.Ok(results.ToArray());
         }
     }
 }
